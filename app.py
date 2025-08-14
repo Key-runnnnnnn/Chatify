@@ -48,7 +48,7 @@ except Exception as atlas_error:
         print("🔄 Running without database - using in-memory storage")
         client = None
 
-db_name = os.getenv('DATABASE_NAME', 'chat_app')
+db_name = os.getenv('DATABASE_NAME', 'chatify_db')
 db = client[db_name] if client is not None else None
 users_collection_name = os.getenv('USERS_COLLECTION', 'users')
 rooms_collection_name = os.getenv('ROOMS_COLLECTION', 'rooms')
