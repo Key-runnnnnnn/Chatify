@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - We-Chat{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-tachometer-alt"></i> Welcome back, {{ user.username }}!</h1>
+    <p>Manage your profile and explore chat rooms</p>
+</div>
+
+<div class="container">
+    <div class="nav">
+        <a href="{{ url_for('my_rooms') }}">
+            <i class="fas fa-door-open"></i> My Rooms
+        </a>
+        <a href="{{ url_for('join_room_page') }}">
+            <i class="fas fa-plus-circle"></i> Join Room
+        </a>
+        <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 30px; color: #4a5568; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-user-cog" style="color: #667eea;"></i>
+            Profile Settings
+        </h2>
+
+        <div class="form-group">
+            <label><i class="fas fa-user"></i> Username</label>
+            <div style="display: flex; gap: 15px; align-items: end;">
+                <input type="text" id="username" value="{{ user.username }}" style="flex: 1;">
+                <button class="btn" onclick="updateProfile('username')" style="margin: 0;">
+                    <i class="fas fa-save"></i> Update
+                </button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-envelope"></i> Email Address</label>
+            <div style="display: flex; gap: 15px; align-items: end;">
+                <input type="email" id="email" value="{{ user.email }}" style="flex: 1;">
+                <button class="btn" onclick="updateProfile('email')" style="margin: 0;">
+                    <i class="fas fa-save"></i> Update
+                </button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-lock"></i> Change Password</label>
+            <div style="display: flex; gap: 15px; align-items: end;">
+                <input type="password" id="password" placeholder="Enter new password" style="flex: 1;">
+                <button class="btn" onclick="updateProfile('password')" style="margin: 0;">
+                    <i class="fas fa-key"></i> Update
+                </button>
+            </div>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 25px; color: #4a5568; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-bolt" style="color: #f6ad55;"></i>
+            Quick Actions
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+            <a href="{{ url_for('my_rooms') }}" class="btn" style="margin: 0; justify-content: center; padding: 20px;">
+                <i class="fas fa-door-open"></i>
+                My Chat Rooms
+            </a>
+            <a href="{{ url_for('join_room_page') }}" class="btn btn-success"
+                style="margin: 0; justify-content: center; padding: 20px;">
+                <i class="fas fa-users"></i>
+                Join a Room
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateProfile(field) {
+        const value = document.getElementById(field).value;
+        const messageDiv = document.getElementById('message');
+
+        if (!value.trim()) {
+            messageDiv.innerHTML = '<div class="error"><i class="fas fa-exclamation-triangle"></i> Please enter a value</div>';
+            return;
+        }
+
+        fetch('/update_profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `field=${field}&value=${encodeURIComponent(value)}`
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.innerHTML = '<div class="success"><i class="fas fa-check-circle"></i> ' + data.message + '</div>';
+                    if (field === 'password') {
+                        document.getElementById('password').value = '';
+                    }
+                } else {
+                    messageDiv.innerHTML = '<div class="error"><i class="fas fa-exclamation-triangle"></i> ' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                messageDiv.innerHTML = '<div class="error"><i class="fas fa-exclamation-triangle"></i> An error occurred</div>';
+            });
+    }
+</script>
+{% endblock %}

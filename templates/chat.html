@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - Chat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 75vh;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .chat-header .online-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .online-indicator {
+        width: 10px;
+        height: 10px;
+        background-color: #51cf66;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 25px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+        background-color: #cbd5e0;
+        border-radius: 20px;
+    }
+
+    .message {
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        border-radius: 18px;
+        max-width: 70%;
+        position: relative;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message.own {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 6px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .message.other {
+        background: white;
+        color: #2d3748;
+        margin-right: auto;
+        border-bottom-left-radius: 6px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    .message.system {
+        background: linear-gradient(135deg, #fbb6ce 0%, #f687b3 100%);
+        color: #2d3748;
+        text-align: center;
+        border-radius: 25px;
+        font-style: italic;
+        margin: 15px auto;
+        max-width: 50%;
+        font-weight: 500;
+    }
+
+    .message-header {
+        font-weight: 700;
+        margin-bottom: 8px;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .message-time {
+        font-size: 11px;
+        opacity: 0.8;
+        font-weight: 400;
+    }
+
+    .message-content {
+        font-size: 15px;
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+
+    .chat-input {
+        display: flex;
+        padding: 25px;
+        background: white;
+        gap: 15px;
+        align-items: end;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .chat-input input {
+        flex: 1;
+        border: 2px solid #e2e8f0;
+        border-radius: 25px;
+        padding: 15px 20px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background-color: #f8fafc;
+    }
+
+    .chat-input input:focus {
+        border-color: #667eea;
+        background-color: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .chat-input .btn {
+        border-radius: 25px;
+        padding: 15px 25px;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .chat-actions {
+        margin-bottom: 30px;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .admin-badge {
+        background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(81, 207, 102, 0.3);
+    }
+
+    .kick-btn {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        color: white;
+        border: none;
+        padding: 4px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        margin-left: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .kick-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    }
+
+    .typing-indicator {
+        display: none;
+        padding: 10px 20px;
+        color: #718096;
+        font-style: italic;
+        font-size: 14px;
+    }
+
+    .typing-dots {
+        display: inline-block;
+    }
+
+    .typing-dots span {
+        animation: typingDots 1.4s infinite;
+        opacity: 0;
+    }
+
+    .typing-dots span:nth-child(1) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dots span:nth-child(2) {
+        animation-delay: 0.4s;
+    }
+
+    .typing-dots span:nth-child(3) {
+        animation-delay: 0.6s;
+    }
+
+    @keyframes typingDots {
+        20% {
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-comments"></i> {{ room.name }}</h1>
+    <p style="text-align: center; margin-top: 10px;">
+        Room Key: <span class="room-key">{{ room.key }}</span>
+    </p>
+</div>
+
+<div class="container">
+    <div class="chat-actions">
+        <a href="{{ url_for('dashboard') }}" class="btn">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a href="{{ url_for('leave_room_route', room_key=room.key) }}" class="btn btn-danger">
+            <i class="fas fa-sign-out-alt"></i> Leave Room
+        </a>
+        {% if room.created_by == user._id|string %}
+        <div class="admin-badge">
+            <i class="fas fa-crown"></i>
+            Room Administrator
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card" style="padding: 0;">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div>
+                    <h3><i class="fas fa-hashtag"></i> {{ room.name }}</h3>
+                </div>
+                <div class="online-info">
+                    <div class="online-indicator"></div>
+                    <span>Online: <strong id="user-count">1</strong></span>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="messages">
+                <div class="message system">
+                    <div class="message-content">
+                        <i class="fas fa-info-circle"></i>
+                        Welcome to {{ room.name }}! Start chatting below.
+                    </div>
+                </div>
+            </div>
+
+            <div class="typing-indicator" id="typing-indicator">
+                <i class="fas fa-pencil-alt"></i>
+                Someone is typing
+                <span class="typing-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                </span>
+            </div>
+
+            <div class="chat-input">
+                <input type="text" id="message-input" placeholder="Type your message..." maxlength="500">
+                <button class="btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    const socket = io();
+    const roomKey = '{{ room.key }}';
+    const currentUserId = '{{ user._id|string }}';
+    const isAdmin = '{{ room.created_by }}' === currentUserId;
+
+    // Join room when page loads
+    socket.emit('join', { room: roomKey });
+
+    // Listen for messages
+    socket.on('message', function (data) {
+        displayMessage(data);
+    });
+
+    // Listen for user kicks
+    socket.on('user_kicked', function (data) {
+        if (data.kicked_user_id === currentUserId) {
+            alert('You have been kicked from the room');
+            window.location.href = '/dashboard';
+        } else {
+            displayMessage({
+                username: 'System',
+                message: data.message,
+                timestamp: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+            });
+        }
+    });
+
+    function displayMessage(data) {
+        const messagesDiv = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+
+        let messageClass = 'message';
+        if (data.username === 'System') {
+            messageClass += ' system';
+        } else if (data.user_id === currentUserId) {
+            messageClass += ' own';
+        } else {
+            messageClass += ' other';
+        }
+
+        messageDiv.className = messageClass;
+
+        let kickButton = '';
+        if (isAdmin && data.user_id && data.user_id !== currentUserId && data.username !== 'System') {
+            kickButton = `<button class="kick-btn" onclick="kickUser('${data.user_id}')" title="Kick user">
+                <i class="fas fa-user-times"></i>
+            </button>`;
+        }
+
+        if (data.username === 'System') {
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <i class="fas fa-info-circle"></i> ${data.message}
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span><i class="fas fa-user"></i> ${data.username}</span>
+                    <span class="message-time">${data.timestamp} ${kickButton}</span>
+                </div>
+                <div class="message-content">${data.message}</div>
+            `;
+        }
+
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        // Add sound notification for new messages (except own messages)
+        if (data.user_id !== currentUserId && data.username !== 'System') {
+            // You can add a notification sound here
+            // new Audio('notification.mp3').play().catch(() => {});
+        }
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('message-input');
+        const message = input.value.trim();
+
+        if (message) {
+            socket.emit('message', {
+                message: message,
+                room: roomKey
+            });
+            input.value = '';
+        }
+    }
+
+    function kickUser(userId) {
+        if (confirm('Are you sure you want to kick this user?')) {
+            socket.emit('kick_user', {
+                room: roomKey,
+                target_user_id: userId
+            });
+        }
+    }
+
+    // Send message on Enter key press
+    document.getElementById('message-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Leave room when page unloads
+    window.addEventListener('beforeunload', function () {
+        socket.emit('leave', { room: roomKey });
+    });
+</script>
+{% endblock %}

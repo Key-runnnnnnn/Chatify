@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Register - We-Chat{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-comments"></i> We-Chat</h1>
+    <p>Join the Community and Start Chatting</p>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2 style="text-align: center; margin-bottom: 30px; color: #4a5568; font-size: 2rem; font-weight: 700;">
+            <i class="fas fa-user-plus" style="color: #667eea; margin-right: 10px;"></i>
+            Create Account
+        </h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="username"><i class="fas fa-user"></i> Username</label>
+                <input type="text" id="username" name="username" placeholder="Choose a unique username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a strong password" required>
+            </div>
+
+            <button type="submit" class="btn"
+                style="width: 100%; justify-content: center; font-size: 18px; padding: 18px;">
+                <i class="fas fa-rocket"></i>
+                Join We-Chat
+            </button>
+        </form>
+
+        {% if error %}
+        <div class="error">
+            <i class="fas fa-exclamation-triangle"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0;">
+            <p style="color: #718096; font-size: 16px;">
+                Already part of the community?
+                <a href="{{ url_for('login') }}" style="color: #667eea; font-weight: 600; text-decoration: none;">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In Here
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}My Rooms - We-Chat{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1><i class="fas fa-door-open"></i> My Chat Rooms</h1>
+    <p>Manage and access your created rooms</p>
+</div>
+
+<div class="container">
+    <div class="nav">
+        <a href="{{ url_for('dashboard') }}">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </a>
+        <a href="{{ url_for('join_room_page') }}">
+            <i class="fas fa-plus-circle"></i> Join Room
+        </a>
+        <a href="{{ url_for('logout') }}">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 25px; color: #4a5568; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-plus-square" style="color: #667eea;"></i>
+            Create New Room
+        </h2>
+        <form method="POST" action="{{ url_for('create_room') }}">
+            <div class="form-group">
+                <label for="room_name"><i class="fas fa-hashtag"></i> Room Name</label>
+                <input type="text" id="room_name" name="room_name" placeholder="Enter an awesome room name" required>
+            </div>
+            <button type="submit" class="btn btn-success"
+                style="width: 100%; justify-content: center; font-size: 18px;">
+                <i class="fas fa-magic"></i>
+                Create Room
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2 style="margin-bottom: 25px; color: #4a5568; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-list" style="color: #f6ad55;"></i>
+            Your Rooms ({{ rooms|length }})
+        </h2>
+        {% if rooms %}
+        <div style="display: grid; gap: 20px;">
+            {% for room in rooms %}
+            <div class="room-item" style="position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                    <h3
+                        style="margin: 0; color: #2d3748; font-size: 1.4rem; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-hashtag" style="color: #667eea;"></i>
+                        {{ room.name }}
+                    </h3>
+                    <div class="room-key" style="font-size: 12px; padding: 6px 12px;">
+                        {{ room.key }}
+                    </div>
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; font-size: 14px; color: #718096;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-users" style="color: #38a169;"></i>
+                        <span><strong>{{ room.members|length }}</strong> members</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-calendar-alt" style="color: #3182ce;"></i>
+                        <span>{{ room.created_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-clock" style="color: #805ad5;"></i>
+                        <span>{{ room.created_at.strftime('%H:%M') }}</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="{{ url_for('chat_room', room_key=room.key) }}" class="btn" style="margin: 0;">
+                        <i class="fas fa-comments"></i>
+                        Enter Room
+                    </a>
+                    <button class="btn" onclick="copyRoomKey('{{ room.key }}')"
+                        style="margin: 0; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">
+                        <i class="fas fa-copy"></i>
+                        Copy Key
+                    </button>
+                    <button class="btn btn-danger" onclick="deleteRoom('{{ room.key }}', '{{ room.name }}')"
+                        style="margin: 0;">
+                        <i class="fas fa-trash-alt"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px; color: #718096;">
+            <i class="fas fa-inbox" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;"></i>
+            <h3 style="margin-bottom: 10px; color: #4a5568;">No rooms yet!</h3>
+            <p>You haven't created any rooms yet. Create your first room above to get started!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function deleteRoom(roomKey, roomName) {
+        if (confirm(`Are you sure you want to delete the room "${roomName}"? This action cannot be undone and will remove all members.`)) {
+            window.location.href = `/delete_room/${roomKey}`;
+        }
+    }
+
+    function copyRoomKey(roomKey) {
+        navigator.clipboard.writeText(roomKey).then(function () {
+            showToast('Room key copied to clipboard!', 'success');
+        }).catch(function () {
+            const textArea = document.createElement('textarea');
+            textArea.value = roomKey;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast('Room key copied to clipboard!', 'success');
+        });
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'success' ? 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)' : 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)'};
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+        `;
+        toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease-in forwards';
+            setTimeout(() => document.body.removeChild(toast), 300);
+        }, 3000);
+    }
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}
